@@ -249,6 +249,7 @@ void room(int room_num){
 }
 
 void show_bar(WINDOW *bar){
+	wclear(bar);
     mvwprintw(bar, 0, 0, ">");
     wrefresh(bar);
 }
