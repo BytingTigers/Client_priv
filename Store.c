@@ -13,19 +13,60 @@
 redisContext *c = NULL;
 
 void connectRedis() {
-    c = redisConnect("localhost", 6739);
+    c = redisConnect("home.hokuma.pro", 6380);
+
     if (c == NULL) {
         printf("Error: Failure when connecting to Redis server.\n");
         exit(1);
     }
-    printf("Connected to Redis\n");
+    // TODO: Delete after deployment and release
+    redisCommand(c, "AUTH bytingtigers");
+    printf("Connected to Redis...\n");
+    redisCommand(c, "SELECT 3");
 }
 
-void store() {
-    connectRedis();
+// Root name is emoji_store
+
+// Types of emojis:
+// 1. Happy
+// 2. Sad
+// 3. Angry
+// 4. Custom
+
+void listMenus() {
+    redisReply *reply;
+
+    reply = redisCommand(c, "KEYS *");
+    printf("Available menus:\n");
+    if (reply->elements == 0) {
+        printf("No menus available\n");
+        return;
+    }
+    for (int i = 0; i < reply->elements; i++) {
+        printf("%s\n", reply->element[i]->str);
+    }
+
+    // reply = redisCommand(c, "LRANGE menus 0 4");
+    // printf("Available menus:\n");
+    // if (reply->elements == 0) {
+    //     printf("No menus available\n");
+    //     return;
+    // }
+    // for (int i = 0; i < reply->elements; i++) {
+    //     printf("%s\n", reply->element[i]->str);
+    // }
 }
+
+// void listEmojis(int menutNum) {
+//     redisReply *reply;
+//     reply = redisCommand(c, "LRANGE %d 0 -1", menuNum);
+//     printf("Available emojis:\n");
+//     for (int i = 0; i < reply->elements; i++) {
+//         printf("%s\n", reply->element[i]->str);
+//     }
 
 int main() {
-    store();
+    connectRedis();
+    listMenus();
     return 0;
 }
