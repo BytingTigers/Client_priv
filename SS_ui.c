@@ -3,9 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define BUFFER_SIZE 1024
+
 char userID[20] = "";
 char password[20] = "";
 bool exit_flag = false;
+char message[BUFFER_SIZE];
 
 void init_scr(){
     initscr();
@@ -308,22 +311,26 @@ void chat(int room_num){
 		show_bar(chat_bar);
 	}
 	if(key == '\n'){
+		mvprintw(11, 11, message);
 		wclear(chat_bar);
 		mvwprintw(chat_bar, 0, 0, ">");
 		wrefresh(chat_bar);
 		inputCursor = 1;
+		memset(message, 0, BUFFER_SIZE);
 	}
 	if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
 		if(inputCursor > 1){
 			inputCursor--;
 			mvprintw(30, inputCursor, " ");
 			refresh();
+			message[inputCursor - 1] = '\0';
 		}
 	}
 	if(key >= 32 && key <= 126){
 		if(inputCursor < 70){
 			mvaddch(30, inputCursor, key);
 			refresh();
+			message[inputCursor - 1] = key;
 			inputCursor++;
 		}
 	}
