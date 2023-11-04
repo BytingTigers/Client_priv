@@ -19,7 +19,6 @@ redisReply *replyEmoji;
 redisReply *replyMain;
 redisReply *replyAddEmoji;
 char *selectedEmoji;
-char *newEmoji;
 int menuNum = 0;
 
 void connectRedis() {
@@ -65,9 +64,10 @@ char* listEmojis() {
 }
 
 void addEmoji() {
+    char newEmoji[MAX_EMOJI_LENGTH];
     printf("Enter your new emoji: ");
     while (true) {
-        scanf("%s", &newEmoji);
+        scanf("%s", newEmoji);
         if (strlen(newEmoji) > MAX_EMOJI_LENGTH && strlen(newEmoji) < 1) {
             printf("Invalid input. Please try again.\n\n\n");
             printf("Enter your new emoji: ");
