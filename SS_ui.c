@@ -171,11 +171,13 @@ void regis(){
 		    exit(EXIT_FAILURE);
 		}
 
-		send(sockfd, '1', sizeof(char), 0);
+		send(sockfd, "1", sizeof(char), 0);
 		snprintf(IDPW_regis, sizeof(IDPW_regis), "%s.%s", regis_id, regis_password);
-		send(sockfd, IDPW_regis, sizeof(IDPW_regis), 0);
+		fprintf(stderr, "```%s```", IDPW_regis);
+		send(sockfd, IDPW_regis, strlen(IDPW_regis), 0);	
 		char return_val[20];
 		int recv_len = recv(sockfd, return_val, sizeof(return_val), 0);
+		fprintf(stderr, "%d", recv_len);
 		return_val[recv_len] = '\0';
 		close(sockfd);
 		break;
@@ -342,7 +344,8 @@ void login(){
 				    close(sockfd);
 				    exit(EXIT_FAILURE);
 				}								
-				send(sockfd, '2', sizeof(char), 0);
+				send(sockfd, "2", sizeof(char), 0);
+
 				snprintf(IDPW, sizeof(IDPW), "%s.%s", userID, password);
 				send(sockfd, IDPW, sizeof(IDPW), 0);
 				int recv_len = recv(sockfd, jwt, sizeof(jwt),0);
@@ -538,14 +541,19 @@ void chat_list(WINDOW *list){
         perror("Error: authentication failed");
 	exit(EXIT_FAILURE);
     }
-    send(sockfd, '1', sizeof(char), 0);
+    send(sockfd, "1", sizeof(char), 0);
 
     
 
     wattron(list, A_BOLD);
-    for(int i=0;i<room_cnt;i++){
-    	wprintw(list, "%d. %s\n", i+1, roomName[i]);
-    }
+    for(int i=0; i<room_cnt; i++){
+        if(roomPass[i] != ""){
+	    wprintw(list, "%d. %s (locked)\n", i+1, roomName[i]);
+	}
+	else{
+	    wprintw(list, "%d. %s\n", i+1, roomName[i]);
+	}
+    } 
     wattroff(list, A_BOLD);
     wrefresh(list);
 }
