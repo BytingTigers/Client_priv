@@ -7,19 +7,24 @@
 #include <pthread.h>
 
 #define BUFFER_SIZE 1024
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "192.168.1.105"
 
 char userID[20] = "";
 char password[20] = "";
 char regis_id[20] = "";
 char regis_password[20] = "";
+char *roomName[100] = {};
+char *roomPass[100] = {};
 bool exit_flag = false;
-char roomName[3] = {"room1", "room2", "room3"};
 char message[BUFFER_SIZE];
 int sockfd;
 struct sockaddr_in auth_addr;
 struct sockaddr_in chat_addr;
+struct sockaddr_in room_addr;
 char jwt[200];
+char name_tmp[20];
+char pass_tmp[20];
+int room_cnt = 0;
 
 void init_scr(){
     initscr();
@@ -55,8 +60,7 @@ void regis(){
     memset(regis_password, 0, 20);
     int key;
     int userIDCursorPosition = 12;
-    int userPWCursorPosition = 12;
-    int mode;
+    int userPWCursorPosition = 12;   
     char IDPW_regis[52];
 
     WINDOW *regis_window = newwin(10, 35, 13, 28);
@@ -75,8 +79,31 @@ void regis(){
 		exit_flag = true;
 		break;
 	}
-	if(key == '\n')
-		break;
+	if(key == '\n'){
+	    if(userIDCursorPosition <= 12){
+	        userIDCursorPosition = 12;
+		memset(regis_id, 0, sizeof(regis_id));
+		WINDOW *warn_window = newwin(10, 35, 13, 28);
+		wbkgd(warn_window, COLOR_PAIR(2));
+		wrefresh(warn_window);
+		mvwprintw(warn_window, 3, 10, "Empty user id!");
+		mvwprintw(warn_window, 5, 7, "Press Enter to retry");
+		wrefresh(warn_window);
+		while(1){
+		    key = getch();
+
+		    if(key == '\n'){
+		        wclear(warn_window);
+			delwin(warn_window);
+			touchwin(regis_window);
+			wrefresh(regis_window);
+			break;
+		    }				 
+		}
+		continue;
+	    }
+	    break;
+	}		
 	if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
 	    if(userIDCursorPosition > 12){
 	        userIDCursorPosition--;
@@ -86,7 +113,7 @@ void regis(){
 	    }
 	}
 	if(key >= 32 && key <= 126){
-	    if(userIDCursorPosition < 30){
+	    if(userIDCursorPosition < 32){
 	        mvwaddch(regis_window, 3, userIDCursorPosition, key);
 		wrefresh(regis_window);
 		regis_id[userIDCursorPosition - 12] = key;
@@ -105,6 +132,28 @@ void regis(){
 		break;
 	}
 	if(key == '\n'){
+		if(userPWCursorPosition <= 12){
+		    userPWCursorPosition = 12;
+		    memset(regis_password, 0, sizeof(regis_password));
+		    WINDOW *warn_window = newwin(10, 35, 13, 28);
+		    wbkgd(warn_window, COLOR_PAIR(2));
+		    mvwprintw(warn_window, 3, 10, "Empty password!");
+		    mvwprintw(warn_window, 5, 7, "Press Enter to retry");
+		    wrefresh(warn_window);
+
+		    while(1){
+		        key = getch();
+
+			if(key == '\n'){
+			    wclear(warn_window);
+			    delwin(warn_window);
+			    touchwin(regis_window);
+			    wrefresh(regis_window);
+			    break;
+			}
+		    }
+		    continue;
+		}
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		if(sockfd < 0){
 		    perror("Error: Socket creation failed");
@@ -113,7 +162,7 @@ void regis(){
 
 		memset(&auth_addr, 0, sizeof(auth_addr));
 		auth_addr.sin_family = AF_INET;
-		auth_addr.sin_port = htons(5000);
+		auth_addr.sin_port = htons(5006);
 		auth_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
 		if(connect(sockfd, (struct sockaddr*)&auth_addr, sizeof(auth_addr)) < 0){
@@ -122,8 +171,7 @@ void regis(){
 		    exit(EXIT_FAILURE);
 		}
 
-		mode = htonl(1);
-		send(sockfd, &mode, sizeof(int), 0);
+		send(sockfd, '1', sizeof(char), 0);
 		snprintf(IDPW_regis, sizeof(IDPW_regis), "%s.%s", regis_id, regis_password);
 		send(sockfd, IDPW_regis, sizeof(IDPW_regis), 0);
 		char return_val[20];
@@ -180,7 +228,6 @@ void login(){
     int key;
     int userIDCursorPosition = 12;
     int userPWCursorPosition = 12;
-    int mode;
     char IDPW[52];
     memset(jwt, 0, 200);
 
@@ -213,6 +260,30 @@ void login(){
 		continue;
 	}
 	if(key == '\n'){
+		if(userIDCursorPosition <= 12){
+		    userIDCursorPosition = 12;
+		    memset(userID, 0, sizeof(userID));
+
+		    WINDOW *warn_window = newwin(10, 35, 13, 28);
+		    wbkgd(warn_window, COLOR_PAIR(2));
+		    wrefresh(warn_window);
+		    mvwprintw(warn_window, 3, 10, "Empty user ID!");
+		    mvwprintw(warn_window, 5, 7, "Press Enter to retry");
+		    wrefresh(warn_window);
+
+		    while(1){
+		        key = getch();
+
+			if(key == '\n'){
+			    wclear(warn_window);
+			    delwin(warn_window);
+			    touchwin(login_window);
+			    wrefresh(login_window);
+			    break;
+			}
+		    }
+		    continue;
+		}
 		while(1){
 			key = getch();
 
@@ -234,6 +305,29 @@ void login(){
 				break;
 			}
 			if(key == '\n'){
+				if(userPWCursorPosition <= 12){
+				    userPWCursorPosition = 12;
+				    memset(password, 0, sizeof(password));
+				    WINDOW *warn_window = newwin(10, 35, 13, 28);
+				    wbkgd(warn_window, COLOR_PAIR(2));
+				    wrefresh(warn_window);
+				    mvwprintw(warn_window, 3, 10, "Empty password!");
+				    mvwprintw(warn_window, 5, 7, "Press Enter to retry");
+				    wrefresh(warn_window);
+
+				    while(1){
+				        key = getch();
+
+					if(key == '\n'){
+					    wclear(warn_window);
+					    delwin(warn_window);
+					    touchwin(login_window);
+					    wrefresh(login_window);
+					    break;
+					}
+				    }
+				    continue;
+				}
 				sockfd = socket(AF_INET, SOCK_STREAM, 0);
 				if(sockfd < 0){
 				    perror("Error: Socket creation failed");
@@ -241,15 +335,14 @@ void login(){
 				}
 				memset(&auth_addr, 0, sizeof(auth_addr));
 				auth_addr.sin_family = AF_INET;
-				auth_addr.sin_port = htons(5000);
+				auth_addr.sin_port = htons(5006);
 				auth_addr.sin_addr.s_addr = inet_addr(SERVER_IP);		
 				if(connect(sockfd, (struct sockaddr *)&auth_addr, sizeof(auth_addr)) <0){
 				    perror("Error: Connection failed");
 				    close(sockfd);
 				    exit(EXIT_FAILURE);
-				}				
-				mode = htonl(2);
-				send(sockfd, &mode, sizeof(int), 0);
+				}								
+				send(sockfd, '2', sizeof(char), 0);
 				snprintf(IDPW, sizeof(IDPW), "%s.%s", userID, password);
 				send(sockfd, IDPW, sizeof(IDPW), 0);
 				int recv_len = recv(sockfd, jwt, sizeof(jwt),0);
@@ -308,25 +401,153 @@ void login(){
 void menu_window(){
 
     attron(A_BOLD);
-    mvprintw(2, 2, "1. chat");
-    mvprintw(4, 2, "2. help");
-    mvprintw(6, 2, "3. user info");
-    mvprintw(8, 2, "4. exit");
+    mvprintw(2, 2, "1. chat list");
+    mvprintw(4, 2, "2. new chat");
+    mvprintw(6, 2, "3. help");
+    mvprintw(8, 2, "4. user info");
+    mvprintw(10, 2, "5. logout");
+    mvprintw(12, 2, "6. exit");
     attroff(A_BOLD);
     refresh();
 }
 
-void chat_list(){
+void new_chat(){
+    int key;
+    int nameCursor = 12;
+    int passCursor = 16;
+    WINDOW *new_room = newwin(10, 35, 13, 28);
+    wbkgd(new_room, COLOR_PAIR(2));
+    wrefresh(new_room);
+    mvwprintw(new_room, 2, 2, "Room name: ");
+    mvwprintw(new_room, 4, 2, "Room password: ");
+    wrefresh(new_room);
+    while(1){
+        key = getch();
+
+	if(key == KEY_F(1)){
+	    wclear(new_room);
+	    touchwin(stdscr);
+	    return;	    
+	}
+	if(key == '\n'){
+    	    if(nameCursor <= 12){
+	        nameCursor = 12;
+		memset(name_tmp, 0, sizeof(name_tmp));
+		WINDOW *warn_window = newwin(10, 35, 13, 28);
+		wbkgd(warn_window, COLOR_PAIR(2));
+		wrefresh(warn_window);
+		mvwprintw(warn_window, 3, 10, "Empty room name!");
+		mvwprintw(warn_window, 5, 7, "Press Enter to retry");
+		wrefresh(warn_window);
+		while(1){
+		    key = getch();
+
+		    if(key == '\n'){
+		        wclear(warn_window);
+			delwin(warn_window);
+			touchwin(new_room);
+			wrefresh(new_room);
+			break;
+		    }
+		}
+		continue;
+	    }		
+	    break;
+	}
+	if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
+	    if(nameCursor > 15){
+	        nameCursor--;
+		mvwprintw(new_room, 2, nameCursor, " ");
+		wrefresh(new_room);
+		name_tmp[nameCursor - 12] = '\0';			
+	    }
+	}
+	if(key >= 32 && key <= 126){
+	    if(nameCursor < 35){
+	        mvwaddch(new_room, 2, nameCursor, key);
+		wrefresh(new_room);
+		name_tmp[nameCursor - 12] = key;
+		nameCursor++;
+	    }
+	}
+    }
+
+    while(1){
+        key = getch();
+
+	if(key == KEY_F(1)){
+	    wclear(new_room);
+	    touchwin(stdscr);
+	    break;
+	}
+	if(key == '\n'){
+	    roomName[room_cnt] = strdup(name_tmp);
+	    roomPass[room_cnt] = strdup(pass_tmp);
+	    room_cnt++;
+	    memset(name_tmp, 0, sizeof(name_tmp));
+	    memset(pass_tmp, 0, sizeof(pass_tmp));
+	    wclear(new_room);
+	    touchwin(stdscr);
+	    break;
+	}
+	if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
+	    if(passCursor > 15){
+	        passCursor--;
+		mvwprintw(new_room, 4, passCursor, " ");
+		wrefresh(new_room);
+		pass_tmp[passCursor - 16] = '\0';
+	    }
+	}
+	if(key >= 32 && key <= 126){
+	    if(passCursor < 35){
+	        mvwaddch(new_room, 4, passCursor, key);
+		wrefresh(new_room);
+		pass_tmp[passCursor - 16] = key;
+		passCursor++;
+	    }
+	}
+    }    
+}
+
+void chat_list(WINDOW *list){
     clear();
-    attron(A_BOLD);
-    mvprintw(4, 2, "Room 2");
-    mvprintw(6, 2, "Room 3");
-    mvprintw(8, 2, "Room 4");
-    mvprintw(10, 2, "Room 5");
-    attroff(A_BOLD);
     mvprintw(28, 70, "Press F1 to quit");
     mvprintw(30, 0, ">");
     refresh();
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd < 0){
+        perror("Error: Socket creation failed");
+	exit(EXIT_FAILURE);
+    }
+
+    room_addr.sin_family = AF_INET;
+    room_addr.sin_port = htons(5005);
+    room_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
+
+    if(connect(sockfd, (struct sockaddr *)&room_addr, sizeof(room_addr)) < 0){
+        perror("Error: Connection failed");
+	close(sockfd);
+	exit(EXIT_FAILURE);
+    } 
+    send(sockfd, userID, sizeof(userID), 0);
+    send(sockfd, jwt, sizeof(jwt), 0);
+    char return_flag[10];
+    int recv_len = recv(sockfd, return_flag, sizeof(return_flag),0);
+    return_flag[recv_len] = '\0';
+    if(strcmp("SUCCESS", return_flag) != 0){
+        perror("Error: authentication failed");
+	exit(EXIT_FAILURE);
+    }
+    send(sockfd, '1', sizeof(char), 0);
+
+    
+
+    wattron(list, A_BOLD);
+    for(int i=0;i<room_cnt;i++){
+    	wprintw(list, "%d. %s\n", i+1, roomName[i]);
+    }
+    wattroff(list, A_BOLD);
+    wrefresh(list);
 }
 
 void room(int room_num){
@@ -426,7 +647,7 @@ int main(){
 	login();
 	if(exit_flag)
 		break;
-	if(jwt){
+	if(strcmp(jwt, "ERROR")){
 		break;
 	}
 	else{
@@ -452,6 +673,7 @@ int main(){
     menu_window();
    char roomNum[5];
    int roomCursor;
+   WINDOW *room_list = newwin(10, 40, 0, 0);
    while(1){
    	key = getch();
 	if(key == KEY_F(1)){
@@ -461,20 +683,23 @@ int main(){
 	if(key == 49){
 	    memset(roomNum, 0, sizeof(roomNum));
 	    roomCursor = 1;	   
-	    chat_list();
+	    chat_list(room_list);
 	    while(1){		
 		key = getch();
 			
 		if(key == KEY_F(1)){
 		    clear();
+		    wclear(room_list);
+		    touchwin(stdscr);
 		    menu_window();
 		    break;
 		}
 		if(key == '\n'){
+		    wclear(room_list);
 		    chat(atoi(roomNum));
 		    memset(roomNum, 0, sizeof(roomNum));
 		    roomCursor = 1;
-		    chat_list();
+		    chat_list(room_list);
 		}
 		if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
 		    if(roomCursor > 1){
@@ -493,6 +718,9 @@ int main(){
 	    }
 	}
 	if(key == 50){
+	    new_chat();	
+	}
+	if(key == 51){
 	    WINDOW *des_window = newwin(15, 45, 2, 35);
 	    wbkgd(des_window, COLOR_PAIR(2));
 	    mvwprintw(des_window, 2, 2, "description");
@@ -510,7 +738,7 @@ int main(){
 		}			
 	    }
 	}
-	if(key == 51){
+	if(key == 52){
 	    WINDOW *info_window = newwin(15, 45, 2, 35);
 	    wbkgd(info_window, COLOR_PAIR(2));
 	    mvwprintw(info_window, 2, 2, "user info");
@@ -532,7 +760,10 @@ int main(){
 		}
 	    }
 	}
-	if(key == 52){
+	if(key == 53){
+	
+	}
+	if(key == 54){
 	    exit_flag = true;
 	    break;
 	}
