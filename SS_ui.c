@@ -5,6 +5,7 @@
 
 char userID[20] = "";
 char password[20] = "";
+bool exit_flag = false;
 
 void init_scr(){
     initscr();
@@ -54,8 +55,10 @@ void regis(){
     while(1){
         key = getch();
 
-	if(key == KEY_F(1))
-		endwin();
+	if(key == KEY_F(1)){
+		exit_flag = true;
+		break;
+	}
 	if(key == '\n')
 		break;
 	if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
@@ -73,12 +76,16 @@ void regis(){
 	    }
 	}
     }
+    if(exit_flag)
+	    return;
     
     while(1){
 	key = getch();
 
-        if(key == KEY_F(1))
-		endwin();
+        if(key == KEY_F(1)){
+		exit_flag = true;
+		break;
+	}
 	if(key == '\n')
 		break;
 	if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
@@ -96,6 +103,8 @@ void regis(){
 	    }
 	}
     }
+    if(exit_flag)
+	    return;
     wclear(regis_window);
     mvwprintw(regis_window, 3, 10, "registered!");
     mvwprintw(regis_window, 4, 8, "Press Enter to login");
@@ -104,13 +113,17 @@ void regis(){
     while(1){
     	key = getch();
 
-	if(key == KEY_F(1))
-		endwin();
+	if(key == KEY_F(1)){
+		exit_flag = true;
+		break;
+	}
 	if(key == '\n'){
 		delwin(regis_window);		
 		break;
 	}
     }
+    if(exit_flag)
+	    return;
 }
 
 void login(){
@@ -134,7 +147,8 @@ void login(){
         key = getch();
 
         if(key == KEY_F(1)){
-            endwin();
+            exit_flag = true;
+	    break;
         }
 	if(key == KEY_F(2)){
 		regis();
@@ -152,8 +166,10 @@ void login(){
 		while(1){
 			key = getch();
 
-			if(key == KEY_F(1))
-				endwin();
+			if(key == KEY_F(1)){
+				exit_flag = true;
+				break;
+			}
 			if(key == KEY_F(2)){
 				regis();
 				memset(userID, 0, 20);
@@ -187,6 +203,8 @@ void login(){
 			}
 
 		}
+		if(exit_flag)
+			break;
 		if(flag){
 			continue;
 		}
@@ -194,6 +212,8 @@ void login(){
 			break;
 		}
 	}
+	if(exit_flag)
+		break;
 	if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
 		if(userIDCursorPosition > 12){
 			userIDCursorPosition--;
@@ -211,9 +231,6 @@ void login(){
 		}
 	}
     }
-
-    printw(userID);
-    printw(password);
 }
 
 void menu_window(){
@@ -249,7 +266,7 @@ void room(int room_num){
 }
 
 void show_bar(WINDOW *bar){
-	wclear(bar);
+    wclear(bar);
     mvwprintw(bar, 0, 0, ">");
     wrefresh(bar);
 }
@@ -331,7 +348,8 @@ int main(){
 
     while(1){
 	login();
-
+	if(exit_flag)
+		break;
 	if(strcmp(userID, "root") == 0 && strcmp(password, "pass") == 0){
 		break;
 	}
@@ -348,14 +366,21 @@ int main(){
 	}
     }
 
-    
-   clear(); 
-   menu_window();
+    if(exit_flag){
+    	endwin();
+        return 0;
+    }
+
+
+    clear();
+    menu_window();
    
    while(1){
    	key = getch();
-	if(key == KEY_F(1))
-		endwin();
+	if(key == KEY_F(1)){
+		exit_flag = true;
+		break;
+	}
 	if(key == 49){
 	    while(1){
 	        chat_list();
@@ -424,8 +449,11 @@ int main(){
 	    }
 	}
 	if(key == 52){
-	    endwin();
+	    exit_flag = true;
+	    break;
 	}
    }
-    endwin();
+   if(exit_flag)
+	   endwin();
+   endwin();
 }
