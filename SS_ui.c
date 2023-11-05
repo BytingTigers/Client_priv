@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <sys/select.h>
 
 #define BUFFER_SIZE 4096
 #define SERVER_IP "127.0.0.1"
@@ -17,6 +18,7 @@ char regis_password[20] = "";
 char *roomName[128] = {};
 char *roomPass[128] = {};
 bool exit_flag = false;
+bool no_room = false;
 char message[1000];
 char send_buffer[BUFFER_SIZE];
 char recv_buffer[BUFFER_SIZE];
@@ -28,26 +30,6 @@ char jwt[200];
 char name_tmp[20];
 char pass_tmp[20];
 int room_cnt = 0;
-
-typedef struct {
-	int sockfd;
-	char recv_buffer[BUFFER_SIZE];
-} ReceiveThreadData;
-
-void *receiveThread(void *data){
-	ReceiveThreadData *threadData = (ReceiveThreadData *)data;
-
-	while(1){
-		int recv_len = recv(threadData->sockfd, threadData->recv_buffer, sizeof(threadData->recv_buffer), 0);
-		if(recv_len > 0){
-			threadData->recv_buffer[recv_len] = '\0';
-
-			printw("%s\n", threadData->recv_buffer);
-			refresh();
-		}
-	}
-	return NULL;
-}
 
 void init_scr(){
     initscr();
@@ -484,7 +466,7 @@ void new_chat(){
 	    }
 	}
 	if(key >= 32 && key <= 126){
-	    if(nameCursor < 35){
+	    if(nameCursor < 33){
 	        mvwaddch(new_room, 2, nameCursor, key);
 			wrefresh(new_room);
 			name_tmp[nameCursor - 12] = key;
@@ -537,7 +519,7 @@ void new_chat(){
 	    break;
 	}
 	if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
-	    if(passCursor > 15){
+	    if(passCursor > 16){
 	        passCursor--;
 		mvwprintw(new_room, 4, passCursor, " ");
 		wrefresh(new_room);
@@ -545,7 +527,7 @@ void new_chat(){
 	    }
 	}
 	if(key >= 32 && key <= 126){
-	    if(passCursor < 35){
+	    if(passCursor < 36){
 	        mvwaddch(new_room, 4, passCursor, key);
 		wrefresh(new_room);
 		pass_tmp[passCursor - 16] = key;
@@ -556,6 +538,7 @@ void new_chat(){
 }
 
 void chat_list(WINDOW *list){
+	int key;
     send(sockfd, "list", 4, 0);
     wclear(list);
     wrefresh(list);
@@ -566,6 +549,31 @@ void chat_list(WINDOW *list){
     refresh();
     
     int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+	if((int)recv_buffer[0] < 32 || (int)recv_buffer[0] > 126){
+		WINDOW *err = newwin(10, 35, 13, 28);
+		wbkgd(err, COLOR_PAIR(2));
+		wrefresh(err);
+		mvwprintw(err, 3, 10, "There's no room");
+		mvwprintw(err, 5, 7, "Press Enter to return");
+		wrefresh(err);
+
+		while(1){
+
+			key = getch();
+
+			if(key == '\n'){
+				wclear(err);
+				wrefresh(err);
+				delwin(err);
+				clear();
+				touchwin(stdscr);
+				refresh();
+				no_room = true;
+				break;
+			}
+		}
+		return;
+	}
     recv_buffer[recv_len] = '\0';
     refresh();
     char *token;
@@ -583,14 +591,6 @@ void chat_list(WINDOW *list){
     memset(recv_buffer, 0, strlen(recv_buffer));
     wattroff(list, A_BOLD);
     wrefresh(list);
-}
-
-void room(int room_num){
-    clear();
-    attron(A_BOLD);
-    move(1, 1);
-    printw("Room %d", room_num);    
-    refresh();
 }
 
 void show_bar(WINDOW *bar){
@@ -619,66 +619,104 @@ void emoji(){
 void chat(int room_num){
     WINDOW *chat_bar = newwin(1, 60, 30, 0);    
     wrefresh(chat_bar);
-	scrollok(stdscr, TRUE);
-	refresh();
-    room(room_num);
+	WINDOW *msg = newwin(28, 80, 0, 0);
+	wbkgd(msg, COLOR_PAIR(1));
+	wrefresh(msg);
+	scrollok(msg, TRUE);
+	wattron(msg, A_BOLD);
+	wprintw(msg, "Room: %s\n\n", roomName[room_num-1]);
+	wattroff(msg, A_BOLD);
+	wrefresh(msg);
     show_bar(chat_bar);
 	
-	ReceiveThreadData *receiveData = malloc(sizeof(ReceiveThreadData));
-
-	receiveData->sockfd = sockfd;
-
-	pthread_t recvThread;
-	if(pthread_create(&recvThread, NULL, receiveThread, (void *)&receiveData) != 0){
-		perror("Error: thread creation failed");
-		exit(EXIT_FAILURE);
-	}
-
-	pthread_join(recvThread, NULL);
+	fd_set read_fds;
+	int maxfd;
+	struct timeval timeout;
 	
     int key;
     int inputCursor = 1;
-	printw("\n\n");
 	int recv_len;
     while(1){
-        key = getch();
-		
-		if(key == KEY_F(1)){
-			send(sockfd, "leave", 5, 0);
-			pthread_detach(recvThread);
+		FD_ZERO(&read_fds);
+		FD_SET(STDIN_FILENO, &read_fds);
+		FD_SET(sockfd, &read_fds);
+
+		maxfd = sockfd > STDIN_FILENO ? sockfd : STDIN_FILENO;
+
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 10000;
+
+		int ready = select(maxfd + 1, &read_fds, NULL, NULL, &timeout);
+
+		if(ready < 0){
+			perror("select");
 			break;
-		}		
-		if(key == KEY_F(2)){
-			emoji();
-			show_bar(chat_bar);
 		}
-		if(key == '\n'){
-			snprintf(send_buffer, sizeof(send_buffer), "send:%s", message);
-			send(sockfd, send_buffer, strlen(send_buffer), 0);
-			memset(send_buffer, 0, strlen(send_buffer));
-			
-			wclear(chat_bar);
-			mvwprintw(chat_bar, 0, 0, ">");
-			wrefresh(chat_bar);
-			inputCursor = 1;
-			memset(message, 0, BUFFER_SIZE);
-		}
-		if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
-			if(inputCursor > 1){
-				inputCursor--;
-				mvprintw(30, inputCursor, " ");
+
+		if(FD_ISSET(STDIN_FILENO, &read_fds)){
+			key = getch();
+
+			if(key == KEY_F(1)){
+				send(sockfd, "leave", 5, 0);
+				wclear(msg);
+				wrefresh(msg);
+				delwin(msg);
+				touchwin(stdscr);
 				refresh();
-				message[inputCursor - 1] = '\0';
+				break;
+			}		
+			if(key == KEY_F(2)){
+				emoji();
+				show_bar(chat_bar);
+			}
+			if(key == '\n'){
+				snprintf(send_buffer, sizeof(send_buffer), "send:%s", message);
+				send(sockfd, send_buffer, strlen(send_buffer), 0);
+				memset(send_buffer, 0, strlen(send_buffer));
+				
+				wclear(chat_bar);
+				mvwprintw(chat_bar, 0, 0, ">");
+				wrefresh(chat_bar);
+				inputCursor = 1;
+				memset(message, 0, strlen(message));
+			}
+			if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
+				if(inputCursor > 1){
+					inputCursor--;
+					mvwprintw(chat_bar, 0, inputCursor, " ");
+					wrefresh(chat_bar);
+					message[inputCursor - 1] = '\0';
+				}
+			}
+			if(key >= 32 && key <= 126){
+				if(inputCursor < 70){
+					mvwaddch(chat_bar, 0, inputCursor, key);
+					wrefresh(chat_bar);
+					message[inputCursor - 1] = key;
+					inputCursor++;
+				}
 			}
 		}
-		if(key >= 32 && key <= 126){
-			if(inputCursor < 70){
-				mvaddch(30, inputCursor, key);
-				refresh();
-				message[inputCursor - 1] = key;
-				inputCursor++;
+
+		if(FD_ISSET(sockfd, &read_fds)){
+			int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer) - 1, 0);
+			if(recv_len > 0){
+				recv_buffer[recv_len] = '\0';
+				wprintw(msg,"%s\n", recv_buffer);
+				wrefresh(msg);
+				memset(recv_buffer, 0, strlen(recv_buffer));
 			}
-		}		
+			else if(recv_len == 0)
+				break;
+			else{
+				perror("recv");
+				break;
+			}
+
+		}
+        
+		
+				
     }
 
 }
@@ -763,6 +801,11 @@ int main(){
 			memset(roomNum, 0, sizeof(roomNum));
 			roomCursor = 1;
 			chat_list(room_list);
+			if(no_room){
+				menu_window();
+				no_room = false;
+				continue;
+			}
 			while(1){
 				key = getch();
 
@@ -888,7 +931,7 @@ int main(){
 						roomNum[roomCursor - 1] = '\0';
 					}
 				}
-				if(key >= 32 && key <= 126){
+				if(key >= 49 && key <= 57){
 					mvaddch(30, roomCursor, key);
 					refresh();
 					roomNum[roomCursor - 1] = key;
