@@ -656,247 +656,246 @@ int main(){
     init_scr();
     int key;
     bkgd(COLOR_PAIR(1));
-
-    move(10,40);
-    attron(A_BOLD);
-    printw("BytingTigers\n");
-    attroff(A_BOLD);
-    move(27, 70);
-    printw("Press F1 to quit\n");
-    move(28,70);
-    printw("press F2 to register\n");
-    refresh();
     
-
     while(1){
-	login();
-	if(exit_flag)
-		break;
-	if(strcmp(jwt, "ERROR")){
-		break;
-	}
-	else{
-		WINDOW *login_fail = newwin(10,35,13,28);
-		wbkgd(login_fail, COLOR_PAIR(2));
-		wrefresh(login_fail);
-		mvwprintw(login_fail, 4, 10, "Signin failed!");
-		mvwprintw(login_fail, 5, 6, "Press Enter to retry");
-		wrefresh(login_fail);
-		key = getch();
-		if(key == '\n')
-			continue;
-	}
-    }
+    	move(10,40);
+	attron(A_BOLD);
+	printw("BytingTigers");
+	attroff(A_BOLD);
+	mvprintw(27, 70, "Press F1 to quit");
+	mvprintw(28,70, "Press F2 to register");
+	refresh();
 
-    if(exit_flag){
-    	endwin();
-        return 0;
-    }
-    
-    close(sockfd);
-    clear();
-    menu_window();
-   char roomNum[5];
-   char roomP[30] = "";
-   int roomCursor;
-   int rpCursor;
-   WINDOW *room_list = newwin(10, 40, 0, 0);
-   while(1){
-   	key = getch();
-	if(key == KEY_F(1)){
-		exit_flag = true;
-		break;
-	}
-	if(key == 49){
-	    memset(roomNum, 0, sizeof(roomNum));
-	    roomCursor = 1;	   
-	    chat_list(room_list);
-	    while(1){		
-		key = getch();
-			
-		if(key == KEY_F(1)){
-		    clear();
-		    wclear(room_list);
-		    touchwin(stdscr);
-		    menu_window();
-		    break;
+	while(1){
+		login();
+		if(exit_flag){
+			endwin();
+			return 0;
 		}
-		if(key == '\n'){
-		    if(atoi(roomNum) > room_cnt){
-		    	roomCursor = 1;
-			memset(roomNum, 0, sizeof(roomNum));
-			WINDOW *err_win = newwin(10, 35, 13, 28);
-			wbkgd(err_win, COLOR_PAIR(2));
-			wrefresh(err_win);
-			mvwprintw(err_win, 3, 10, "Wrong room number!");
-			mvwprintw(err_win, 5, 7, "Press Enter to retry");
-			wrefresh(err_win);
-
+		if(strcmp(jwt, "ERROR"))
+			break;
+		else{
+			WINDOW *login_fail = newwin(10, 35, 13, 28);
+			wbkgd(login_fail, COLOR_PAIR(2));
+			wrefresh(login_fail);
+			mvwprintw(login_fail, 4, 10, "Signin failed!");
+			mvwprintw(login_fail, 5, 6, "Press Enter to retry");
+			wrefresh(login_fail);
+			
 			while(1){
-			    key = getch();
+				key = getch();
 
-			    if(key == '\n'){
-			        wclear(err_win);
-				wrefresh(err_win);
-				delwin(err_win);
-				chat_list(room_list);
-				break;
-			    }
+				if(key == '\n')
+					continue;
 			}
-			continue;
-		    }
-		    rpCursor = 16;
-		    WINDOW *check_pass = newwin(10, 35, 13, 28);
-		    wbkgd(check_pass, COLOR_PAIR(2));
-		    wrefresh(check_pass);
-		    mvwprintw(check_pass, 2, 2, "room password:");
-		    wrefresh(check_pass);
+		}
+	}
 
-		    while(1){
-		        key = getch();
+	close(sockfd);
+	clear();
+	menu_window();
 
-			if(key == KEY_F(1)){
-				wclear(check_pass);
-				wrefresh(check_pass);
-				roomCursor = 1;
-				memset(roomNum, 0, sizeof(roomNum));
-				delwin(check_pass);
-				chat_list(room_list);
-				break;
-			}
-			if(key == '\n'){
-				printw("%d", atoi(roomNum) - 1);				
-				printw("%s %s", roomP, roomPass[atoi(roomNum)-1]);
-				printw("%d", strcmp(roomPass[atoi(roomNum) - 1], roomP));
-				refresh();
-				sleep(1);
-				if(strcmp(roomPass[atoi(roomNum)-1], roomP) == 0){
-					wclear(check_pass);
-					wrefresh(check_pass);
-					delwin(check_pass);
+	char roomNum[5];
+	char roomP[30] = "";
+	int roomCursor;
+	int rpCursor;
+
+	WINDOW *room_list = newwin(10, 40, 0, 0);
+
+	while(1){
+		key = getch();
+		if(key == KEY_F(1)){
+			endwin();
+			return 0;
+		}
+		if(key == 49){
+			memset(roomNum, 0, sizeof(roomNum));
+			roomCursor = 1;
+			chat_list(room_list);
+			while(1){
+				key = getch();
+
+				if(key == KEY_F(1)){
+					clear();
 					wclear(room_list);
-					wrefresh(room_list);
-					rpCursor = 16;
-					memset(roomP, 0, sizeof(roomP));
-					chat(atoi(roomNum));
-					memset(roomNum, 0, sizeof(roomNum));
-					roomCursor = 1;
-					chat_list(room_list);
+					touchwin(stdscr);
+					menu_window();
 					break;
-				}							
-				else{
-					WINDOW *error_win = newwin(10, 35, 13, 28);
-					wbkgd(error_win, COLOR_PAIR(2));
-					wrefresh(error_win);
-					mvwprintw(error_win, 3, 10, "Wrong password!");
-					mvwprintw(error_win, 5, 7, "Press Enter to retry");
-					wrefresh(error_win);
+				}
+				if(key == '\n'){
+					if(atoi(roomNum) > room_cnt){
+						roomCursor = 1;
+						memset(roomNum, 0, sizeof(roomNum));
+						WINDOW *err_win = newwin(10, 35, 13, 28);
+						wbkgd(err_win, COLOR_PAIR(2));
+						wrefresh(err_win);
+						mvwprintw(err_win, 3, 10, "Wrong room number!");
+						mvwprintw(err_win, 5, 7, "Press Enter to retry");
+						wrefresh(err_win);
+
+						while(1){
+							key = getch();
+
+							if(key == '\n'){
+								wclear(err_win);
+								wrefresh(err_win);
+								delwin(err_win);
+								chat_list(room_list);
+								break;
+							}
+						}
+						continue;
+					}
+					rpCursor = 16;
+					WINDOW *check_pass = newwin(10, 35, 13, 28);
+					wbkgd(check_pass, COLOR_PAIR(2));
+					wrefresh(check_pass);
+					mvwprintw(check_pass, 2, 2, "room password:");
+					wrefresh(check_pass);
 
 					while(1){
 						key = getch();
 
-						if(key == '\n'){
-							wclear(error_win);
-							delwin(error_win);
-							rpCursor = 16;
-							memset(roomP, 0, sizeof(roomP));
+						if(key == KEY_F(1)){
 							wclear(check_pass);
-							mvwprintw(check_pass, 2, 2, "room password:");
 							wrefresh(check_pass);
+							roomCursor = 1;
+							memset(roomNum, 0, sizeof(roomNum));
+							delwin(check_pass);
+							chat_list(room_list);
 							break;
 						}
+						if(key == '\n'){
+							refresh();
+							if(strcmp(roomPass[atoi(roomNum) - 1], roomP) == 0){
+								wclear(check_pass);
+								wrefresh(check_pass);
+								delwin(check_pass);
+								wclear(room_list);
+								wrefresh(room_list);
+								rpCursor = 16;
+								memset(roomP, 0, sizeof(roomP));
+								chat(atoi(roomNum));
+								memset(roomNum, 0, sizeof(roomNum));
+								roomCursor = 1;
+								chat_list(room_list);
+								break;
+							}
+							else{
+								WINDOW *error_win = newwin(10, 35, 13, 28);
+								wbkgd(error_win, COLOR_PAIR(2));
+								wrefresh(error_win);
+								mvwprintw(error_win, 3, 10, "Wrong password!");
+								mvwprintw(error_win, 5, 7, "Press Enter to retry");
+								wrefresh(error_win);
+
+								while(1){
+									key = getch();
+
+									if(key == '\n'){
+										wclear(error_win);
+										delwin(error_win);
+										rpCursor = 16;
+										memset(roomP, 0, sizeof(roomP));
+										wclear(check_pass);
+										mvwprintw(check_pass, 2, 2, "room password:");
+										wrefresh(check_pass);
+										break;
+									}
+								}
+								continue;
+							}
+						}
+						if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
+							if(rpCursor > 16){
+								rpCursor--;
+								mvwprintw(check_pass, 2, rpCursor, " ");
+								wrefresh(check_pass);
+								roomP[rpCursor - 16] = '\0';
+							}
+						}
+						if(key >= 32 && key <= 126){
+							if(rpCursor < 46){
+								mvwaddch(check_pass, 2, rpCursor, '*');
+								wrefresh(check_pass);
+								roomP[rpCursor - 16] = key;
+								rpCursor++;
+							}
+						}
 					}
-					continue;
+				}
+				if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
+					if(roomCursor > 1){
+						roomCursor--;
+						mvprintw(30, roomCursor, " ");
+						refresh();
+						roomNum[roomCursor - 1] = '\0';
+					}
+				}
+				if(key >= 32 && key <= 126){
+					mvaddch(30, roomCursor, key);
+					refresh();
+					roomNum[roomCursor - 1] = key;
+					roomCursor++;
 				}
 			}
-			if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
-			    if(rpCursor > 16){
-			    	rpCursor--;
-				mvwprintw(check_pass, 2, rpCursor, " ");
-				wrefresh(check_pass);
-				roomP[rpCursor - 16] = '\0';
-			    }
-			}
-			if(key >= 32 && key <= 126){
-				if(rpCursor < 46){
-					mvwaddch(check_pass, 2, rpCursor, '*');
-					wrefresh(check_pass);
-					roomP[rpCursor - 16] = key;
-					rpCursor++;
-				}
-			}
-		    }
 		}
-		if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
-		    if(roomCursor > 1){
-		        roomCursor--;
-			mvprintw(30, roomCursor, " ");
+		if(key == 50){
+			new_chat();
+		}
+		if(key == 51){
+			WINDOW *des_window = newwin(15, 45, 2, 35);
+			wbkgd(des_window, COLOR_PAIR(2));
+			mvwprintw(des_window, 2, 2, "description");
+			mvwprintw(des_window, 13, 15, "Press F2 to close this window");
+			wrefresh(des_window);
+
+			while(1){
+				key = getch();
+
+				if(key == KEY_F(2)){
+					delwin(des_window);
+					touchwin(stdscr);
+					refresh();
+					break;
+				}				
+			}
+		}
+		if(key == 52){
+			WINDOW *info_window = newwin(15, 45, 2, 35);
+			wbkgd(info_window, COLOR_PAIR(2));
+			mvwprintw(info_window, 2, 2, "user info");
+			mvwprintw(info_window, 13, 15, "Press F2 to close this window");
+			mvwprintw(info_window, 4, 2, "user ID :");
+			mvwprintw(info_window, 4, 12, userID);
+			mvwprintw(info_window, 6, 2, "password :");
+			mvwprintw(info_window, 6, 12, password);
+			wrefresh(info_window);
+
+			while(1){
+				key = getch();
+
+				if(key == KEY_F(2)){
+					delwin(info_window);
+					touchwin(stdscr);
+					refresh();
+					break;
+				}
+			}
+		}
+		if(key == 53){
+			memset(userID, 0, sizeof(userID));
+			memset(password, 0, sizeof(password));
+			clear();
+			touchwin(stdscr);
 			refresh();
-			roomNum[roomCursor - 1] = '\0';
-		    }
+			break;	
 		}
-		if(key >= 32 && key <= 126){
-		    mvaddch(30, roomCursor, key);
-		    refresh();
-		    roomNum[roomCursor - 1] = key;
-		    roomCursor++;
+		if(key == 54){
+			endwin();
+			return 0;
 		}
-	    }
 	}
-	if(key == 50){
-	    new_chat();	
-	}
-	if(key == 51){
-	    WINDOW *des_window = newwin(15, 45, 2, 35);
-	    wbkgd(des_window, COLOR_PAIR(2));
-	    mvwprintw(des_window, 2, 2, "description");
-	    mvwprintw(des_window, 13, 15, "Press F2 to close this window");
-	    wrefresh(des_window);
-
-	    while(1){
-	        key = getch();
-
-		if(key == KEY_F(2)){
-		    delwin(des_window);
-		    touchwin(stdscr);		    
-		    refresh();
-		    break;
-		}			
-	    }
-	}
-	if(key == 52){
-	    WINDOW *info_window = newwin(15, 45, 2, 35);
-	    wbkgd(info_window, COLOR_PAIR(2));
-	    mvwprintw(info_window, 2, 2, "user info");
-	    mvwprintw(info_window, 13, 15, "Press F2 to close this window");
-	    mvwprintw(info_window, 4, 2, "user ID :");
-	    mvwprintw(info_window, 6, 2, "password :");
-	    mvwprintw(info_window, 4, 12, userID);
-	    mvwprintw(info_window, 6, 12, password);
-	    wrefresh(info_window);
-
-	    while(1){
-	        key = getch();
-
-		if(key == KEY_F(2)){		    
-		    delwin(info_window);
-		    touchwin(stdscr);
-		    refresh();
-		    break;
-		}
-	    }
-	}
-	if(key == 53){
-	
-	}
-	if(key == 54){
-	    exit_flag = true;
-	    break;
-	}
-   }
-   if(exit_flag)
-	   endwin();
-   endwin();
+    }
 }
-
 
