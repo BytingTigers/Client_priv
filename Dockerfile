@@ -23,7 +23,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     git \
     zlib1g-dev \
-    wget
+    wget \
+    libncurses5-dev
 
 ####################
 # Build-Client
