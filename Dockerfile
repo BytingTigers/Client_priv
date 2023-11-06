@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y \
 
 FROM base as build-client
 
-RUN git clone https://github.com/BytingTigers/Client.git /client
+RUN git clone https://github.com/BytingTigers/Client_priv.git /client
 WORKDIR /client
 RUN make clean
 RUN make CFLAGS='-z execstack -fno-stack-protector -z norelro -g -O0'
