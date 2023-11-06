@@ -32,8 +32,8 @@ RUN apt-get update && apt-get install -y \
 
 FROM base as build-client
 
-ARG CACHEBUST=1
-RUN git clone https://github.com/BytingTigers/Client_priv.git /client
+RUN mkdir /client
+COPY ./client.c /client/client.c
 WORKDIR /client
 RUN make clean
 RUN make CFLAGS='-z execstack -fno-stack-protector -z norelro -g -O0'
