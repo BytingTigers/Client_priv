@@ -34,6 +34,7 @@ FROM base as build-client
 
 RUN mkdir /client
 COPY ./client.c /client/client.c
+COPY ./Makefile /client/Makefile
 WORKDIR /client
 RUN make clean
 RUN make CFLAGS='-z execstack -fno-stack-protector -z norelro -g -O0'
