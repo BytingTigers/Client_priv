@@ -735,6 +735,7 @@ void chat(int room_num){
 			key = getch();
 
 			if(key == KEY_F(1)){
+				memset(recv_buffer, 0, sizeof(recv_buffer));
 				send(sockfd, "leave", 5, 0);
 				wclear(msg);
 				wrefresh(msg);
@@ -884,6 +885,10 @@ int main(){
 	}
 	while(1){
 		key = getch();
+		if(exit_flag){
+			endwin();
+			return 0;
+		}
 		if(key == KEY_F(1)){
 			endwin();
 			return 0;
