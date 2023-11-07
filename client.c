@@ -529,7 +529,7 @@ void new_chat(){
 					}
 					snprintf(send_buffer, sizeof(send_buffer), "make:%s:%s", name_tmp, pass_tmp);
 					write(sockfd, send_buffer, strlen(send_buffer));
-					memset(send_buffer, 0, strlen(send_buffer));
+					memset(send_buffer, 0, sizeof(send_buffer));
 
 					int recv_len = read(sockfd, recv_buffer, sizeof(recv_buffer));
 					recv_buffer[recv_len] = '\0';
@@ -770,7 +770,7 @@ void chat(int room_num){
 				}	
 				snprintf(send_buffer, sizeof(send_buffer), "send:%s", message);
 				write(sockfd, send_buffer, strlen(send_buffer));
-				memset(send_buffer, 0, strlen(send_buffer));
+				memset(send_buffer, 0, sizeof(send_buffer));
 				
 				wclear(chat_bar);
 				mvwprintw(chat_bar, 0, 0, ">");
@@ -899,7 +899,7 @@ int main(){
 
 	snprintf(send_buffer, sizeof(send_buffer), "auth:%s:%s", userID, jwt);
 	write(sockfd, send_buffer, strlen(send_buffer));
-	memset(send_buffer, 0, strlen(send_buffer));
+	memset(send_buffer, 0, sizeof(send_buffer));
 	int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
 	if(strcmp(recv_buffer, "SUCCESS") != 0){
 		printf("authentication failed");
@@ -982,7 +982,7 @@ int main(){
 							refresh();
 							snprintf(send_buffer, sizeof(send_buffer), "join:%s:%s", roomName[atoi(roomNum) - 1], roomP);
 							write(sockfd, send_buffer, strlen(send_buffer));
-							memset(send_buffer, 0, strlen(send_buffer));
+							memset(send_buffer, 0, sizeof(send_buffer));
 							int recv_len = read(sockfd, recv_buffer, sizeof(recv_buffer));
 							if(strcmp(recv_buffer, "ERROR_QUIT") == 0){
 								WINDOW *err = newwin(10, 35, 13, 28);
