@@ -559,7 +559,7 @@ void new_chat(){
 								wrefresh(new_room);
 								nameCursor = 12;
 								passCursor = 16;
-								memset(recv_buffer, 0, strlen(recv_buffer));
+								memset(recv_buffer, 0, sizeof(recv_buffer));
 								break;
 							}
 						}
@@ -623,8 +623,9 @@ void chat_list(WINDOW *list){
     mvprintw(28, 70, "Press F1 to quit");
     mvprintw(30, 0, ">");
     refresh();
-    
+    memset(recv_buffer, 0, sizeof(recv_buffer));
     int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+
 	if(strcmp(recv_buffer, "ERROR_QUIT") == 0){
 		WINDOW *err = newwin(10, 35, 13, 28);
 		wbkgd(err, COLOR_PAIR(2));
@@ -683,7 +684,7 @@ void chat_list(WINDOW *list){
     	wprintw(list, roomName[i]);
 		wprintw(list, "\n");
     }
-    memset(recv_buffer, 0, strlen(recv_buffer));
+    memset(recv_buffer, 0, sizeof(recv_buffer));
     wattroff(list, A_BOLD);
     wrefresh(list);
 }
@@ -774,7 +775,6 @@ void chat(int room_num){
 		}
 
 		if(FD_ISSET(sockfd, &read_fds)){
-			memset(recv_buffer, 0, sizeof(recv_buffer));
 			int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
 			if(strcmp(recv_buffer, "ERROR_QUIT") == 0){
 				WINDOW *err = newwin(10, 35, 13, 28);
@@ -796,8 +796,9 @@ void chat(int room_num){
 			if(recv_len > 0){
 				recv_buffer[recv_len+1] = '\0';
 				wprintw(msg, recv_buffer);
+				wprintw(msg,"\n");
 				wrefresh(msg);
-				memset(recv_buffer, 0, strlen(recv_buffer));
+				memset(recv_buffer, 0, sizeof(recv_buffer));
 			}
 			else if(recv_len == 0)
 				break;
@@ -986,7 +987,7 @@ int main(){
 								wclear(room_list);
 								wrefresh(room_list);
 								rpCursor = 16;
-								memset(recv_buffer, 0, strlen(recv_buffer));
+								memset(recv_buffer, 0, sizeof(recv_buffer));
 								chat(atoi(roomNum));
 								memset(roomNum, 0, sizeof(roomNum));
 								memset(roomP, 0, sizeof(roomP));								
