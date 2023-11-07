@@ -745,7 +745,7 @@ void chat(int room_num){
 				refresh();
 				break;
 			}			
-			if(key == '\n'){
+			if(key == '\n'){				
 				snprintf(send_buffer, sizeof(send_buffer), "send:%s", message);
 				write(sockfd, send_buffer, strlen(send_buffer));
 				memset(send_buffer, 0, strlen(send_buffer));
@@ -794,7 +794,7 @@ void chat(int room_num){
 				}
 			}
 			if(recv_len > 0){
-				recv_buffer[recv_len+1] = '\0';
+				recv_buffer[recv_len] = '\0';
 				wprintw(msg, recv_buffer);
 				wrefresh(msg);
 				memset(recv_buffer, 0, sizeof(recv_buffer));
