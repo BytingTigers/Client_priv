@@ -156,9 +156,9 @@ void regis(){
 						exit(EXIT_FAILURE);
 					}
 					snprintf(IDPW_regis, sizeof(IDPW_regis), "1.%s.%s", regis_id, regis_password);	
-					send(sockfd, IDPW_regis, strlen(IDPW_regis), 0);		
+					write(sockfd, IDPW_regis, strlen(IDPW_regis));		
 					char return_val[20];
-					int recv_len = recv(sockfd, return_val, sizeof(return_val), 0);
+					int recv_len = read(sockfd, return_val, sizeof(return_val));
 					if(strcmp(return_val , "ERROR_QUIT") == 0){
 						WINDOW *err = newwin(10, 35, 13, 28);
 						wbkgd(err, COLOR_PAIR(2));
@@ -384,8 +384,8 @@ void login(){
 						return;
 					}								
 					snprintf(IDPW, sizeof(IDPW), "2.%s.%s", userID, password);
-					send(sockfd, IDPW, sizeof(IDPW), 0);
-					int recv_len = recv(sockfd, jwt, sizeof(jwt),0);
+					write(sockfd, IDPW, sizeof(IDPW));
+					int recv_len = read(sockfd, jwt, sizeof(jwt));
 
 					jwt[recv_len] = '\0';
 					close(sockfd);
@@ -528,10 +528,10 @@ void new_chat(){
 						continue;
 					}
 					snprintf(send_buffer, sizeof(send_buffer), "make:%s:%s", name_tmp, pass_tmp);
-					send(sockfd, send_buffer, strlen(send_buffer), 0);
+					write(sockfd, send_buffer, strlen(send_buffer));
 					memset(send_buffer, 0, strlen(send_buffer));
 
-					int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+					int recv_len = read(sockfd, recv_buffer, sizeof(recv_buffer));
 					recv_buffer[recv_len] = '\0';
 
 					if(strcmp(recv_buffer, "SUCCESS") != 0){
@@ -615,7 +615,7 @@ void new_chat(){
 
 void chat_list(WINDOW *list){
 	int key;
-    send(sockfd, "list", 4, 0);
+    write(sockfd, "list", 4);
     wclear(list);
     wrefresh(list);
 	scrollok(list, TRUE);
@@ -624,7 +624,7 @@ void chat_list(WINDOW *list){
     mvprintw(30, 0, ">");
     refresh();
     memset(recv_buffer, 0, sizeof(recv_buffer));
-    int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+    int recv_len = read(sockfd, recv_buffer, sizeof(recv_buffer));
 
 	if(strcmp(recv_buffer, "ERROR_QUIT") == 0){
 		WINDOW *err = newwin(10, 35, 13, 28);
@@ -737,7 +737,7 @@ void chat(int room_num){
 
 			if(key == KEY_F(1)){
 				memset(recv_buffer, 0, sizeof(recv_buffer));
-				send(sockfd, "leave", 5, 0);
+				write(sockfd, "leave", 5);
 				wclear(msg);
 				wrefresh(msg);
 				delwin(msg);
@@ -747,7 +747,7 @@ void chat(int room_num){
 			}			
 			if(key == '\n'){
 				snprintf(send_buffer, sizeof(send_buffer), "send:%s", message);
-				send(sockfd, send_buffer, strlen(send_buffer), 0);
+				write(sockfd, send_buffer, strlen(send_buffer));
 				memset(send_buffer, 0, strlen(send_buffer));
 				
 				wclear(chat_bar);
@@ -775,7 +775,7 @@ void chat(int room_num){
 		}
 
 		if(FD_ISSET(sockfd, &read_fds)){
-			int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+			int recv_len = read(sockfd, recv_buffer, sizeof(recv_buffer));
 			if(strcmp(recv_buffer, "ERROR_QUIT") == 0){
 				WINDOW *err = newwin(10, 35, 13, 28);
 				wbkgd(err, COLOR_PAIR(2));
@@ -796,7 +796,6 @@ void chat(int room_num){
 			if(recv_len > 0){
 				recv_buffer[recv_len+1] = '\0';
 				wprintw(msg, recv_buffer);
-				wprintw(msg,"\n");
 				wrefresh(msg);
 				memset(recv_buffer, 0, sizeof(recv_buffer));
 			}
@@ -877,9 +876,9 @@ int main(){
 	}
 
 	snprintf(send_buffer, sizeof(send_buffer), "auth:%s:%s", userID, jwt);
-	send(sockfd, send_buffer, strlen(send_buffer), 0);
+	write(sockfd, send_buffer, strlen(send_buffer));
 	memset(send_buffer, 0, strlen(send_buffer));
-	int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+	int recv_len = read(sockfd, recv_buffer, sizeof(recv_buffer));
 	if(strcmp(recv_buffer, "SUCCESS") != 0){
 		printf("authentication failed");
 		endwin();
@@ -960,9 +959,9 @@ int main(){
 						if(key == '\n'){
 							refresh();
 							snprintf(send_buffer, sizeof(send_buffer), "join:%s:%s", roomName[atoi(roomNum) - 1], roomP);
-							send(sockfd, send_buffer, strlen(send_buffer), 0);
+							write(sockfd, send_buffer, strlen(send_buffer));
 							memset(send_buffer, 0, strlen(send_buffer));
-							int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+							int recv_len = read(sockfd, recv_buffer, sizeof(recv_buffer));
 							if(strcmp(recv_buffer, "ERROR_QUIT") == 0){
 								WINDOW *err = newwin(10, 35, 13, 28);
 								wbkgd(err, COLOR_PAIR(2));
