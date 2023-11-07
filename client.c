@@ -878,7 +878,7 @@ int main(){
 	snprintf(send_buffer, sizeof(send_buffer), "auth:%s:%s", userID, jwt);
 	write(sockfd, send_buffer, strlen(send_buffer));
 	memset(send_buffer, 0, strlen(send_buffer));
-	int recv_len = read(sockfd, recv_buffer, sizeof(recv_buffer));
+	int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
 	if(strcmp(recv_buffer, "SUCCESS") != 0){
 		printf("authentication failed");
 		endwin();
