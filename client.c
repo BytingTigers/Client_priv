@@ -642,7 +642,7 @@ void chat_list(WINDOW *list){
 			}
 		}
 	}
-	if((int)recv_buffer[0] < 32 || (int)recv_buffer[0] > 126){
+	if(strcmp(recv_buffer, "EMPTY") == 0){
 		WINDOW *err = newwin(10, 35, 13, 28);
 		wbkgd(err, COLOR_PAIR(2));
 		wrefresh(err);
