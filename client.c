@@ -774,6 +774,7 @@ void chat(int room_num){
 		}
 
 		if(FD_ISSET(sockfd, &read_fds)){
+			memset(recv_buffer, 0, sizeof(recv_buffer));
 			int recv_len = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
 			if(strcmp(recv_buffer, "ERROR_QUIT") == 0){
 				WINDOW *err = newwin(10, 35, 13, 28);
