@@ -745,7 +745,29 @@ void chat(int room_num){
 				refresh();
 				break;
 			}			
-			if(key == '\n'){				
+			if(key == '\n'){			
+				if(inputCursor <= 1){
+					inputCursor = 1;
+					memset(message, 0, sizeof(message));
+					WINDOW *warn_window = newwin(10, 35, 13, 28);
+					wbkgd(warn_window, COLOR_PAIR(2));
+					wrefresh(warn_window);
+					mvwprintw(warn_window, 3, 10, "Empty message!");
+					mvwprintw(warn_window, 5, 7, "Press Enter to retry");
+					wrefresh(warn_window);
+					while(1){
+						key = getch();
+
+						if(key == '\n'){
+							wclear(warn_window);
+							delwin(warn_window);
+							touchwin(msg);
+							wrefresh(msg);
+							break;
+						}				 
+					}
+					continue;
+				}	
 				snprintf(send_buffer, sizeof(send_buffer), "send:%s", message);
 				write(sockfd, send_buffer, strlen(send_buffer));
 				memset(send_buffer, 0, strlen(send_buffer));
@@ -754,7 +776,7 @@ void chat(int room_num){
 				mvwprintw(chat_bar, 0, 0, ">");
 				wrefresh(chat_bar);
 				inputCursor = 1;
-				memset(message, 0, strlen(message));
+				memset(message, 0, sizeof(message));
 			}
 			if(key == KEY_BACKSPACE || key == 127 || key == '\b'){
 				if(inputCursor > 1){
